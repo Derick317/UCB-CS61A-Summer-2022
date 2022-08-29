@@ -1,3 +1,7 @@
+# just for the assignments of CS61A
+*.ok*
+ok
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
