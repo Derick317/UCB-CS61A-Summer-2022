@@ -24,6 +24,15 @@ def roll_dice(num_rolls, dice=six_sided):
     # BEGIN PROBLEM 1
     "*** YOUR CODE HERE ***"
     # END PROBLEM 1
+    score = 0
+    sow_sad = False
+    while num_rolls > 0:
+        new_outcome = dice()
+        if new_outcome == 1:
+            sow_sad = True
+        score += new_outcome
+        num_rolls -= 1
+    return 1 if sow_sad else score
 
 
 def oink_points(player_score, opponent_score):
@@ -33,8 +42,11 @@ def oink_points(player_score, opponent_score):
     opponent_score: The total score of the other player.
     """
     # BEGIN PROBLEM 2
-    "*** YOUR CODE HERE ***"
+    ones = opponent_score % 10
+    tens = opponent_score // 10 % 10
+    return max(1, 2 * tens - ones)
     # END PROBLEM 2
+
 
 
 def take_turn(num_rolls, player_score, opponent_score, dice=six_sided, goal=GOAL_SCORE):
@@ -55,6 +67,10 @@ def take_turn(num_rolls, player_score, opponent_score, dice=six_sided, goal=GOAL
     assert max(player_score, opponent_score) < goal, 'The game should be over.'
     # BEGIN PROBLEM 3
     "*** YOUR CODE HERE ***"
+    if num_rolls > 0:
+        return roll_dice(num_rolls, dice)
+    else:
+        return oink_points(player_score, opponent_score)
     # END PROBLEM 3
 
 
@@ -79,6 +95,13 @@ def pigs_on_prime(player_score, opponent_score):
     """
     # BEGIN PROBLEM 4
     "*** YOUR CODE HERE ***"
+    if is_prime(player_score):
+        addition = 1
+        while not is_prime(player_score + addition):
+            addition += 1
+        return addition
+    else:
+        return 0
     # END PROBLEM 4
 
 
@@ -118,11 +141,24 @@ def play(strategy0, strategy1, score0=0, score1=0, dice=six_sided,
     who = 0  # Who is about to take a turn, 0 (first) or 1 (second)
     leader = None  # To be used in problem 7
     # BEGIN PROBLEM 5
-    "*** YOUR CODE HERE ***"
+    while score0 < goal and score1 < goal:
+        strategy = strategy0 if who == 0 else strategy1
+        player_score, opponent_score = (score0, score1) if who == 0 else (score1, score0)
+        num_rolls = strategy(player_score, opponent_score)
+        player_score += take_turn(num_rolls, player_score, opponent_score, dice, goal)
+        player_score += pigs_on_prime(player_score, opponent_score)
+        if who == 0:
+            score0 = player_score
+        else:
+            score1 = player_score
+        leader, message = say(score0, score1, leader)
+        if message:
+            print(message)
+        who = next_player(who)
+
     # END PROBLEM 5
     # (note that the indentation for the problem 7 prompt (***YOUR CODE HERE***) might be misleading)
     # BEGIN PROBLEM 7
-    "*** YOUR CODE HERE ***"
     # END PROBLEM 7
     return score0, score1
 
@@ -156,7 +192,17 @@ def announce_lead_changes(score0, score1, last_leader=None):
     Player 0 takes the lead by 2
     """
     # BEGIN PROBLEM 6
-    "*** YOUR CODE HERE ***"
+    if score0 > score1:
+        leader = 0
+    elif score0 < score1:
+        leader = 1
+    else:
+        leader = None
+    if leader is None or leader == last_leader:
+        message = None
+    else:
+        message = f"Player {leader} takes the lead by {abs(score0 - score1)}"
+    return leader, message
     # END PROBLEM 6
 
 
@@ -222,7 +268,15 @@ def make_averaged(original_function, total_samples=1000):
     3.0
     """
     # BEGIN PROBLEM 8
-    "*** YOUR CODE HERE ***"
+    def avgf(*args):
+        counter = total_samples
+        sum = 0
+        while counter > 0:
+            sum += original_function(*args)
+            counter -= 1
+        return sum / total_samples
+    
+    return avgf
     # END PROBLEM 8
 
 
@@ -236,7 +290,16 @@ def max_scoring_num_rolls(dice=six_sided, total_samples=1000):
     1
     """
     # BEGIN PROBLEM 9
-    "*** YOUR CODE HERE ***"
+    test_num = 1
+    best_num = 1
+    best_score = 0
+    test_function = make_averaged(roll_dice, total_samples)
+    while test_num < 11:
+        test_score = test_function(test_num, dice)
+        if test_score > best_score:
+            best_num, best_score = test_num, test_score
+        test_num += 1
+    return best_num
     # END PROBLEM 9
 
 
@@ -277,7 +340,10 @@ def oink_points_strategy(score, opponent_score, threshold=8, num_rolls=6):
     returns NUM_ROLLS otherwise.
     """
     # BEGIN PROBLEM 10
-    return 6  # Remove this line once implemented.
+    oink_score = oink_points(score, opponent_score)
+    if oink_score < threshold:
+        return num_rolls
+    return 0
     # END PROBLEM 10
 
 
@@ -287,7 +353,10 @@ def pigs_on_prime_strategy(score, opponent_score, threshold=8, num_rolls=6):
     Otherwise, it returns NUM_ROLLS.
     """
     # BEGIN PROBLEM 11
-    return 6  # Remove this line once implemented.
+    test_score = score + oink_points(score, opponent_score)
+    if is_prime(test_score) or test_score >= score + threshold:
+        return 0
+    return num_rolls
     # END PROBLEM 11
 
 
@@ -297,7 +366,7 @@ def final_strategy(score, opponent_score):
     *** YOUR DESCRIPTION HERE ***
     """
     # BEGIN PROBLEM 12
-    return 6  # Remove this line once implemented.
+    return pigs_on_prime_strategy(score, opponent_score)
     # END PROBLEM 12
 
 ##########################
